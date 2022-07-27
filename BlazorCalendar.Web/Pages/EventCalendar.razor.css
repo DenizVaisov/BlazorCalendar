@@ -1,0 +1,10 @@
+section {
+    border: 0.1px solid grey;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+section > div {
+    border: 0.1px solid grey;
+    padding-bottom: 60px;
+}

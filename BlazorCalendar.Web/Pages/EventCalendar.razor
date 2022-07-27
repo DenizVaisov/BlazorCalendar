@@ -1,0 +1,98 @@
+@using BlazorCalendar.Web.Data
+ 
+@PreviousMonthName 
+<i style="cursor: pointer;" @onclick="async () => await GeneratePreviousMonth()" class="bi bi-chevron-left"></i>
+<i style="cursor: pointer;" @onclick="async () => await GenerateNextMonth()" class="bi bi-chevron-right"></i> 
+@CurrentMonthName 
+
+<section>
+    @for (int i = 1; i < DayOfTheWeek; i++)
+    {
+        <div>
+            <span style="margin-left: 5px;">@(PreviousMonthDays - DayOfTheWeek + i)</span>
+        </div>
+    }
+    @for (int i = 1; i <= Days; i++)
+    {
+        <div>
+            <span style="margin-left: 5px;">@i</span>
+        </div>
+    }
+    @for (int i = NextMonthDays; i >= 0; i--)
+    {
+        <div>
+            <span style="margin-left: 5px;">@(NextMonthDays - i + 1)</span>
+        </div>
+    } 
+</section>
+
+@code {
+    private DateTime MonthStart {get; set;}
+    private DateTime MonthEnd {get; set;}
+    private DateTime PreviousMonth {get; set;}
+
+    private string MonthName {get; set;}
+    private string PreviousMonthName {get; set;}
+    private string CurrentMonthName {get; set;}
+
+    private int CurrentMonth {get; set;}
+    private int Days {get; set;}
+    private int PreviousMonthDays {get; set;}
+    private int DayOfTheWeek {get; set;}  
+    private int NextMonthDays {get; set;}
+
+    protected override async Task OnInitializedAsync() 
+    {
+        PreviousMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month - 1));
+        CurrentMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month));
+        await GenerateCurrentMonth();
+    }
+
+    public async Task GeneratePreviousMonth() 
+    {
+        CurrentMonth--;
+        PreviousMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month + CurrentMonth));
+        CurrentMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month + CurrentMonth + 1));
+        await GenerateCurrentMonth();
+    }
+
+    public async Task GenerateNextMonth() 
+    {
+        CurrentMonth++;
+        PreviousMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month + CurrentMonth - 1));
+        CurrentMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month + CurrentMonth));
+        await GenerateCurrentMonth();
+    }
+
+    public async Task GenerateCurrentMonth() 
+    {
+        MonthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month + CurrentMonth, 1);
+        MonthEnd = MonthStart.AddMonths(1).AddDays(-1);
+        Days = DateTime.DaysInMonth(MonthStart.Year, MonthStart.Month);
+        MonthName = MonthStart.Month switch 
+        {
+           1 => EnumDescription.GetEnumDescription((Month)((int)Month.January)),
+           2 => EnumDescription.GetEnumDescription((Month)((int)Month.February)),
+           3 => EnumDescription.GetEnumDescription((Month)((int)Month.March)),
+           4 => EnumDescription.GetEnumDescription((Month)((int)Month.April)),
+           5 => EnumDescription.GetEnumDescription((Month)((int)Month.May)),
+           6 => EnumDescription.GetEnumDescription((Month)((int)Month.June)),
+           7 => EnumDescription.GetEnumDescription((Month)((int)Month.July)),
+           8 => EnumDescription.GetEnumDescription((Month)((int)Month.August)),
+           9 => EnumDescription.GetEnumDescription((Month)((int)Month.September)),
+           10 => EnumDescription.GetEnumDescription((Month)((int)Month.October)),
+           11 => EnumDescription.GetEnumDescription((Month)((int)Month.November)),
+           12 => EnumDescription.GetEnumDescription((Month)((int)Month.December)),
+           _ => ""
+        };
+
+        PreviousMonth = MonthStart.AddMonths(-CurrentMonth);
+        PreviousMonthDays =  DateTime.DaysInMonth(PreviousMonth.Year, PreviousMonth.Month);
+        DayOfTheWeek = Convert.ToInt32(MonthStart.DayOfWeek.ToString("d")) == 0
+            ? 7
+            : Convert.ToInt32(MonthStart.DayOfWeek.ToString("d"));
+
+        NextMonthDays = 42 - Days - DayOfTheWeek;
+        await Task.Yield();
+    }
+}
