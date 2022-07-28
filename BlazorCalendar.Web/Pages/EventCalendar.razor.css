@@ -1,10 +1,66 @@
 section {
     border: 0.1px solid grey;
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, 150px);
 }
 
 section > div {
     border: 0.1px solid grey;
-    padding-bottom: 60px;
+    height: 120px;
+    overflow-y: auto;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.green-font {
+    color: rgb(15, 180, 15);
+    font-weight: bold;
+}
+
+section.week {
+    display: grid;
+    grid-template-columns: repeat(7, 150px);
+    border: 0;
+}
+
+section > p {
+    height: 30px;
+}
+
+div button.today, div button.today {
+    width: 32px;
+    background-image: none;
+    border: 1px solid transparent!important;
+    border-radius: 4px;
+    box-shadow: none;
+    box-sizing: border-box;
+    font-family: "Google Sans",Roboto,RobotoDraft,Helvetica,Arial,sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    height: 32px;
+    letter-spacing: 0.25px;
+    line-height: 16px;
+    background: #1a73e8;
+    color: #fff;
+    text-transform: capitalize;
+}
+
+div button.day, div button.day {
+    width: 32px;
+    background-image: none;
+    border: 1px solid transparent!important;
+    border-radius: 4px;
+    box-shadow: none;
+    box-sizing: border-box;
+    font-family: "Google Sans",Roboto,RobotoDraft,Helvetica,Arial,sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    height: 32px;
+    letter-spacing: 0.25px;
+    line-height: 16px;
+    color: grey;
+    background: white;
+    text-transform: capitalize;
 }

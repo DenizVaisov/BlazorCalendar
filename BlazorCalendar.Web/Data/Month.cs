@@ -3,6 +3,9 @@ using System.ComponentModel;
 
 namespace BlazorCalendar.Web.Data
 {
+    ///<summary>
+    ///  Перечисление для отображения названий месяцев
+    ///</summary>
     public enum Month
     {
         [Description("Январь")] 

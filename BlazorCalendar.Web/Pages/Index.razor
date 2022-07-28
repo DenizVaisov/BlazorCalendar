@@ -1,5 +1,6 @@
 @page "/"
 
 @using BlazorCalendar.Web.Data
- 
-<EventCalendar/>
+@inject EventRepository data
+
+<EventCalendar Events = "@data.Events"></EventCalendar>

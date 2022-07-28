@@ -1,27 +1,163 @@
 @using BlazorCalendar.Web.Data
+@using System.Collections.Generic;
+@inject IEventRepository eventRepository
+
+<Modal Open="ModalSm" Size="ModalSize.Small">
+    <ModalTitle></ModalTitle>
+    <ModalBody>
+       <Form Model="@CalendarEvent">
+            <Text Label="Событие" @bind-Value="CalendarEvent.Text" ></Text>
+            <Datepicker Label="Дата" @bind-Value="CalendarEvent.Date"></Datepicker>
+            <Timepicker Label="Время" Position="Position.TopLeft" @bind-Value="CalendarEvent.TimeSpan"></Timepicker>
+
+            @if(IsCreate) {
+                <Button id="submit-btn" Variant="Success" State="submitBtnState" Outline="true" @onclick="SubmitDemo">Добавить</Button>
+            }
+
+            @if(IsEdit) {
+                <Button id="submit-btn" Variant="Info" State="submitBtnState" Outline="true" @onclick="async () => await EditEvent(CalendarEvent)">Обновить</Button>
+            }
+        </Form>
+    </ModalBody>
+    <ModalFooter>
+        <Button Variant="Outline" OnClick="e => ModalSm = false">Закрыть</Button>
+    </ModalFooter>
+</Modal>
+
  
 @PreviousMonthName 
 <i style="cursor: pointer;" @onclick="async () => await GeneratePreviousMonth()" class="bi bi-chevron-left"></i>
 <i style="cursor: pointer;" @onclick="async () => await GenerateNextMonth()" class="bi bi-chevron-right"></i> 
-@CurrentMonthName 
+@NextMonthName 
+
+<button class="btn primary ml-3" @onclick="() => {ShowCreateModal();}">Добавить событие</button>
+Текущий месяц: @CurrentMonthName
+
+@*---------------------------------------------------------------------------------------------------------------*@
+@*Календарь*@
+<section class="week">
+    <p class="bold">Пн</p>
+    <p class="bold">Вт</p>
+    <p class="bold">Ср</p>
+    <p class="bold">Чт</p>
+    <p class="bold">Пт</p>
+    <p>Сб</p>
+    <p>Вс</p>
+</section>
 
 <section>
     @for (int i = 1; i < DayOfTheWeek; i++)
     {
+        int day = PreviousMonthDays - DayOfTheWeek + i + 1;
         <div>
-            <span style="margin-left: 5px;">@(PreviousMonthDays - DayOfTheWeek + i)</span>
+            @if(CheckTodayDate(PreviousMonthDays - DayOfTheWeek + i + 1, CurrentMonth - 1 + MonthAway)) {
+                <button type="button" class="today ml-1 mt-1">
+                    @(PreviousMonthDays - DayOfTheWeek + i + 1)
+                </button>
+            }
+            else 
+            {
+                if ((42 - i - DayOfTheWeek + 1) % 7 == 0 || (42 - i - DayOfTheWeek) % 7 == 0)
+                {
+                    <button type="button" class="green-font day ml-1 mt-1">
+                        <span>@(PreviousMonthDays - DayOfTheWeek + i + 1)</span>
+                    </button>
+                }
+
+                else 
+                {
+                    <button type="button" class="day ml-1 mt-1">
+                        @(PreviousMonthDays - DayOfTheWeek + i + 1)
+                    </button>
+                }
+            }
+
+            @foreach(var item in Events
+                .Where(e => e.Date == new DateTime(2022, CurrentMonth - 1 + MonthAway, (PreviousMonthDays - DayOfTheWeek + i)))) 
+            {
+                 <div title="Изменить событие" style="cursor: pointer;" 
+                    @onclick="async () => await ShowEditModal(item)" class="ml-1">
+                    @item.TimeSpan
+                    @item.Text 
+                </div>
+                <Button title="Удалить событие" 
+                    @onclick="async () => await DeleteEvent(item)" Icon="error-standard" Variant="Danger">
+                </Button> 
+            }
         </div>
     }
     @for (int i = 1; i <= Days; i++)
     {
+        int day = i;
         <div>
-            <span style="margin-left: 5px;">@i</span>
+            @if(CheckTodayDate(i, CurrentMonth + MonthAway)) {
+                <button type="button" class="today ml-1 mt-1">@i</button>
+            }
+            else 
+            {
+                if ((42 - i - DayOfTheWeek + 1) % 7 == 0 || (42 - i - DayOfTheWeek) % 7 == 0)
+                {
+                    <button type="button" class="day ml-1 mt-1">
+                        <span class="green-font">@i</span>
+                    </button>
+                }
+                
+                else {
+                    <button type="button" class="day ml-1 mt-1">@i</button>
+                }
+            }
+
+            @foreach(var item in Events
+                .Where(e => e.Date == new DateTime(2022, CurrentMonth + MonthAway, i))) 
+            {
+                 <div title="Изменить событие"
+                    style="cursor: pointer;" @onclick="async () => await ShowEditModal(item)" class="ml-1">
+                    @item.TimeSpan
+                    @item.Text 
+                </div>
+                <Button title="Удалить событие" 
+                    @onclick="async () => await DeleteEvent(item)" Icon="error-standard" Variant="Danger">
+                </Button> 
+            }
         </div>
     }
     @for (int i = NextMonthDays; i >= 0; i--)
     {
-        <div>
-            <span style="margin-left: 5px;">@(NextMonthDays - i + 1)</span>
+        int day = NextMonthDays - i + 1;
+        <div title="">
+            @if(CheckTodayDate(NextMonthDays - i + 1, CurrentMonth + MonthAway + 1)) {
+                <button type="button" class="today ml-1 mt-1">
+                    @(NextMonthDays - i + 1)
+                </button>
+            }
+            else 
+            {
+                if ((42 - i - DayOfTheWeek - 2) % 7 == 0 || (42 - i - DayOfTheWeek - 1) % 7 == 0)
+                {
+                    <button type="button" class="day ml-1 mt-1">
+                    <span class="green-font">  @(NextMonthDays - i + 1)</span>
+                    </button>
+                }
+                else {
+                    <button type="button" class="day ml-1 mt-1">
+                        @(NextMonthDays - i + 1)
+                    </button>
+                }
+            }
+
+            @foreach(var item in Events
+                .Where(e => e.Date == new DateTime(2022, ((CurrentMonth + MonthAway - ToStartMonth + 1) > 12) 
+                ? 12 : CurrentMonth + MonthAway - ToStartMonth + 1, (NextMonthDays - i + 1))))
+            {
+                <div title="Изменить событие"
+                    style="cursor: pointer;" @onclick="async () => await ShowEditModal(item)" class="ml-1">
+                    @item.TimeSpan
+                    @item.Text 
+                </div>
+                <Button title="Удалить событие" 
+                    @onclick="async () => await DeleteEvent(item)" Icon="error-standard" Variant="Danger">
+                </Button> 
+            }
         </div>
     } 
 </section>
@@ -34,59 +170,108 @@
     private string MonthName {get; set;}
     private string PreviousMonthName {get; set;}
     private string CurrentMonthName {get; set;}
+    private string NextMonthName {get; set;}
 
     private int CurrentMonth {get; set;}
+    private int MonthAway {get; set;}
+    private int CurrentDay {get; set;}
     private int Days {get; set;}
     private int PreviousMonthDays {get; set;}
     private int DayOfTheWeek {get; set;}  
     private int NextMonthDays {get; set;}
+    private int ToStartMonth {get; set;}
 
+    private bool IsEdit {get; set;}
+    private bool IsCreate {get; set;}
+    private bool IsDelete {get; set;}
+
+    [Parameter]
+    public bool ModalMd { get; set; }
+
+    [Parameter]
+    public bool ModalSm { get; set; }
+
+    [Parameter]
+    public List<EventData> Events {get; set;}
+
+    private EventData CalendarEvent {get; set;} = new();
+    private LoadingState submitBtnState = LoadingState.Default;
+
+    ///<summary>
+    /// Жизненный цикл компонента Blazor - используется как точка входа 
+    ///</summary>
+    ///<param></param>
     protected override async Task OnInitializedAsync() 
     {
-        PreviousMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month - 1));
-        CurrentMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month));
+        CurrentMonth = DateTime.Now.Month;
+        PreviousMonthName = EnumDescription.GetEnumDescription((Month)(CurrentMonth - 1));
+        CurrentMonthName = EnumDescription.GetEnumDescription((Month)(CurrentMonth));
+        NextMonthName = EnumDescription.GetEnumDescription((Month)(CurrentMonth + 1));
         await GenerateCurrentMonth();
     }
 
+    ///<summary>
+    ///  Генерация предыдущего месяца
+    ///</summary>
     public async Task GeneratePreviousMonth() 
     {
         CurrentMonth--;
-        PreviousMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month + CurrentMonth));
-        CurrentMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month + CurrentMonth + 1));
+        CheckMonth();
+        PreviousMonthName = EnumDescription.GetEnumDescription((Month)
+            ((CurrentMonth + MonthAway - 1) <= 1 
+            ? 12 : CurrentMonth + MonthAway - 1));
+        CurrentMonthName = EnumDescription.GetEnumDescription((Month)(CurrentMonth + MonthAway));
+        NextMonthName = EnumDescription.GetEnumDescription((Month)(CurrentMonth + 1 + MonthAway));
         await GenerateCurrentMonth();
     }
 
+    ///<summary>
+    ///  Генерация следующего месяца
+    ///</summary>
     public async Task GenerateNextMonth() 
     {
         CurrentMonth++;
-        PreviousMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month + CurrentMonth - 1));
-        CurrentMonthName = EnumDescription.GetEnumDescription((Month)(DateTime.Now.Month + CurrentMonth));
+        CheckMonth();
+        PreviousMonthName = EnumDescription.GetEnumDescription((Month)(CurrentMonth - 1 + MonthAway));
+        CurrentMonthName = EnumDescription.GetEnumDescription((Month)(CurrentMonth + MonthAway));
+        NextMonthName = EnumDescription.GetEnumDescription((Month)
+            ((CurrentMonth + MonthAway - ToStartMonth + 1) > 12 
+            ? 1 : CurrentMonth + MonthAway - ToStartMonth + 1));
         await GenerateCurrentMonth();
     }
 
+    ///<summary>
+    ///  Проверка на сегодняшний день (выделение)
+    ///</summary>
+    public bool CheckTodayDate(int day, int month) 
+    {
+        if(DateTime.Now.Month == month && DateTime.Now.Day == day)
+            return true;
+
+        return false;
+    }
+
+    ///<summary>
+    ///  Проверка на переход между месяцами
+    ///</summary>
+    public void CheckMonth() 
+    {
+        if(CurrentMonth == 12) {
+            CurrentMonth = 10; 
+            MonthAway = 2;
+            ToStartMonth = -CurrentMonth;
+        }
+    }
+
+    ///<summary>
+    ///  Генерация текущего месяца
+    ///</summary>
     public async Task GenerateCurrentMonth() 
     {
-        MonthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month + CurrentMonth, 1);
-        MonthEnd = MonthStart.AddMonths(1).AddDays(-1);
+        MonthStart = new DateTime(DateTime.Now.Year, CurrentMonth + MonthAway, 1);
         Days = DateTime.DaysInMonth(MonthStart.Year, MonthStart.Month);
-        MonthName = MonthStart.Month switch 
-        {
-           1 => EnumDescription.GetEnumDescription((Month)((int)Month.January)),
-           2 => EnumDescription.GetEnumDescription((Month)((int)Month.February)),
-           3 => EnumDescription.GetEnumDescription((Month)((int)Month.March)),
-           4 => EnumDescription.GetEnumDescription((Month)((int)Month.April)),
-           5 => EnumDescription.GetEnumDescription((Month)((int)Month.May)),
-           6 => EnumDescription.GetEnumDescription((Month)((int)Month.June)),
-           7 => EnumDescription.GetEnumDescription((Month)((int)Month.July)),
-           8 => EnumDescription.GetEnumDescription((Month)((int)Month.August)),
-           9 => EnumDescription.GetEnumDescription((Month)((int)Month.September)),
-           10 => EnumDescription.GetEnumDescription((Month)((int)Month.October)),
-           11 => EnumDescription.GetEnumDescription((Month)((int)Month.November)),
-           12 => EnumDescription.GetEnumDescription((Month)((int)Month.December)),
-           _ => ""
-        };
 
-        PreviousMonth = MonthStart.AddMonths(-CurrentMonth);
+        PreviousMonth = MonthStart.AddMonths(-1);
         PreviousMonthDays =  DateTime.DaysInMonth(PreviousMonth.Year, PreviousMonth.Month);
         DayOfTheWeek = Convert.ToInt32(MonthStart.DayOfWeek.ToString("d")) == 0
             ? 7
@@ -94,5 +279,63 @@
 
         NextMonthDays = 42 - Days - DayOfTheWeek;
         await Task.Yield();
+    }
+
+
+    ///<summary>
+    ///  Отобразить всплывающее окно для редактирования событий
+    ///</summary>
+    public async Task ShowEditModal(EventData data) 
+    {
+        IsEdit = true;
+        IsCreate = false;
+        ModalSm = true;
+
+        CalendarEvent = data;
+    }
+
+    ///<summary>
+    ///  Отобразить всплывающее окно для создания события
+    ///</summary>
+    public async Task ShowCreateModal() 
+    {
+        IsCreate = true;
+        IsEdit = false;
+        ModalSm = true;
+
+        CalendarEvent = new();
+    }
+
+    ///<summary>
+    ///  Редактирование события
+    ///</summary>
+    public async Task EditEvent(EventData data) 
+    {
+        await eventRepository.EditEvent(data);
+    }
+
+    ///<summary>
+    ///  Удаление события
+    ///</summary>
+    public async Task DeleteEvent(EventData data) 
+    {
+        await eventRepository.DeleteEvent(data);
+        Events = await eventRepository.LoadEvents();
+    }
+
+    ///<summary>
+    ///  Создание события
+    ///</summary>
+    public async Task SubmitDemo()
+    {
+        submitBtnState = LoadingState.Loading;
+        await Task.Delay(1000);
+        submitBtnState = LoadingState.Default;
+
+        await eventRepository.CreateEvent(CalendarEvent);
+        Events = await eventRepository.LoadEvents();
+        CalendarEvent = new();
+
+        System.Console.WriteLine(Events.Count);
     }
 }

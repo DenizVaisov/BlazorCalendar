@@ -6,6 +6,9 @@ namespace BlazorCalendar.Web.Data
 {
     public static class EnumDescription 
     {
+        ///<summary>
+        ///  Получение описания из DescriptionAttribute Enum
+        ///</summary>
         public static string GetEnumDescription(this Enum e)
         {
             var descriptionAttribute = e.GetType().GetMember(e.ToString())[0]
