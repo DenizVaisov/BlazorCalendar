@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlazorCalendar.Web.Data
 {
@@ -7,10 +8,15 @@ namespace BlazorCalendar.Web.Data
     ///</summary>
     public class EventData {
         public int Id {get; set;}
+
+        [Required]
         public string Text {get; set;}
-        public int Day {get; set;}
+
         public bool IsAllDay {get; set;}
+
+        [Required]
         public DateTime? Date {get; set;}
+
         public TimeSpan? TimeSpan {get; set;}
     }
 }

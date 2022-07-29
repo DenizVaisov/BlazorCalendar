@@ -6,9 +6,14 @@
     <ModalTitle></ModalTitle>
     <ModalBody>
        <Form Model="@CalendarEvent">
-            <Text Label="Событие" @bind-Value="CalendarEvent.Text" ></Text>
-            <Datepicker Label="Дата" @bind-Value="CalendarEvent.Date"></Datepicker>
+            <DataAnnotationsValidator />
+
+            <Text Label="Событие" @bind-Value="CalendarEvent.Text"  ValidationFor="() => CalendarEvent.Text"></Text>
+            <Datepicker Label="Дата" @bind-Value="CalendarEvent.Date" ValidationFor="() => CalendarEvent.Date"></Datepicker>
             <Timepicker Label="Время" Position="Position.TopLeft" @bind-Value="CalendarEvent.TimeSpan"></Timepicker>
+             <CheckboxContainer >
+                <Checkbox @bind-Value="@CalendarEvent.IsAllDay" Label="Весь день" />
+            </CheckboxContainer>
 
             @if(IsCreate) {
                 <Button id="submit-btn" Variant="Success" State="submitBtnState" Outline="true" @onclick="SubmitDemo">Добавить</Button>
@@ -30,7 +35,7 @@
 <i style="cursor: pointer;" @onclick="async () => await GenerateNextMonth()" class="bi bi-chevron-right"></i> 
 @NextMonthName 
 
-<button class="btn primary ml-3" @onclick="() => {ShowCreateModal();}">Добавить событие</button>
+<button class="btn primary ml-3" @onclick="async () => {await ShowCreateModal();}">Добавить событие</button>
 Текущий месяц: @CurrentMonthName
 
 @*---------------------------------------------------------------------------------------------------------------*@
@@ -49,7 +54,10 @@
     @for (int i = 1; i < DayOfTheWeek; i++)
     {
         int day = PreviousMonthDays - DayOfTheWeek + i + 1;
-        <div>
+        <div ondragover="event.preventDefault();"
+             ondragstart="event.dataTransfer.SetData('', event.target.id);"
+             @ondrop="async () => await HandleDrop(day)"
+        >
             @if(CheckTodayDate(PreviousMonthDays - DayOfTheWeek + i + 1, CurrentMonth - 1 + MonthAway)) {
                 <button type="button" class="today ml-1 mt-1">
                     @(PreviousMonthDays - DayOfTheWeek + i + 1)
@@ -75,21 +83,25 @@
             @foreach(var item in Events
                 .Where(e => e.Date == new DateTime(2022, CurrentMonth - 1 + MonthAway, (PreviousMonthDays - DayOfTheWeek + i)))) 
             {
-                 <div title="Изменить событие" style="cursor: pointer;" 
-                    @onclick="async () => await ShowEditModal(item)" class="ml-1">
-                    @item.TimeSpan
-                    @item.Text 
+                 <div class="ml-1">
+                    <span class="draggable" draggable="true" title="Изменить событие" style="cursor: pointer;"
+                        @ondragstart="async () => await HandleDragStart(item)"  
+                        @onclick="async () => await ShowEditModal(item)">
+                        @(item.IsAllDay == true ? "Весь день" : item.TimeSpan)
+                        @item.Text 
+                    </span>
+                     <i title="Удалить событие" style="color: red; font-weight: bold; cursor: pointer;" 
+                        @onclick="async () => await DeleteEvent(item)" class="bi bi-x-lg"></i>
                 </div>
-                <Button title="Удалить событие" 
-                    @onclick="async () => await DeleteEvent(item)" Icon="error-standard" Variant="Danger">
-                </Button> 
             }
         </div>
     }
     @for (int i = 1; i <= Days; i++)
     {
         int day = i;
-        <div>
+        <div ondragover="event.preventDefault();"
+             ondragstart="event.dataTransfer.SetData('', event.target.id);"
+             @ondrop="async () => await HandleDrop(day)">
             @if(CheckTodayDate(i, CurrentMonth + MonthAway)) {
                 <button type="button" class="today ml-1 mt-1">@i</button>
             }
@@ -110,21 +122,25 @@
             @foreach(var item in Events
                 .Where(e => e.Date == new DateTime(2022, CurrentMonth + MonthAway, i))) 
             {
-                 <div title="Изменить событие"
-                    style="cursor: pointer;" @onclick="async () => await ShowEditModal(item)" class="ml-1">
-                    @item.TimeSpan
-                    @item.Text 
+                 <div class="ml-1">
+                    <span class="draggable" draggable="true" title="Изменить событие" style="cursor: pointer;"  
+                        @ondragstart="async () => await HandleDragStart(item)"
+                        @onclick="async () => await ShowEditModal(item)">
+                        @(item.IsAllDay == true ? "Весь день" : item.TimeSpan)
+                        @item.Text 
+                    </span>
+                     <i title="Удалить событие" style="color: red; font-weight: bold; cursor: pointer;" 
+                        @onclick="async () => await DeleteEvent(item)" class="bi bi-x-lg"></i>
                 </div>
-                <Button title="Удалить событие" 
-                    @onclick="async () => await DeleteEvent(item)" Icon="error-standard" Variant="Danger">
-                </Button> 
             }
         </div>
     }
     @for (int i = NextMonthDays; i >= 0; i--)
     {
         int day = NextMonthDays - i + 1;
-        <div title="">
+        <div ondragover="event.preventDefault();"
+             ondragstart="event.dataTransfer.SetData('', event.target.id);"
+             @ondrop="async () => await HandleDrop(day)">
             @if(CheckTodayDate(NextMonthDays - i + 1, CurrentMonth + MonthAway + 1)) {
                 <button type="button" class="today ml-1 mt-1">
                     @(NextMonthDays - i + 1)
@@ -149,14 +165,16 @@
                 .Where(e => e.Date == new DateTime(2022, ((CurrentMonth + MonthAway - ToStartMonth + 1) > 12) 
                 ? 12 : CurrentMonth + MonthAway - ToStartMonth + 1, (NextMonthDays - i + 1))))
             {
-                <div title="Изменить событие"
-                    style="cursor: pointer;" @onclick="async () => await ShowEditModal(item)" class="ml-1">
-                    @item.TimeSpan
-                    @item.Text 
+                <div class="ml-1">
+                    <span class="draggable" draggable="true" title="Изменить событие" style="cursor: pointer;"  
+                        @ondragstart="async () => await HandleDragStart(item)"
+                        @onclick="async () => await ShowEditModal(item)">
+                            @(item.IsAllDay == true ? "Весь день" : item.TimeSpan)
+                            @item.Text 
+                    </span>
+                     <i title="Удалить событие" style="color: red; font-weight: bold; cursor: pointer;" 
+                        @onclick="async () => await DeleteEvent(item)" class="bi bi-x-lg"></i>
                 </div>
-                <Button title="Удалить событие" 
-                    @onclick="async () => await DeleteEvent(item)" Icon="error-standard" Variant="Danger">
-                </Button> 
             }
         </div>
     } 
@@ -208,6 +226,29 @@
         CurrentMonthName = EnumDescription.GetEnumDescription((Month)(CurrentMonth));
         NextMonthName = EnumDescription.GetEnumDescription((Month)(CurrentMonth + 1));
         await GenerateCurrentMonth();
+    }
+
+    ///<summary>
+    ///  Скидывание события
+    ///</summary>
+    public async Task HandleDrop(int day) 
+    {
+        System.Console.WriteLine(day);
+        CalendarEvent.Date = new DateTime(2022, CurrentMonth, day);
+        await eventRepository.CreateEvent(CalendarEvent);
+        await eventRepository.DeleteEvent(CalendarEvent);
+        Events = await eventRepository.LoadEvents();
+        System.Console.WriteLine(Events.Count);
+    }
+
+    ///<summary>
+    ///  Перемещение события
+    ///</summary>
+    public async Task HandleDragStart(EventData data) 
+    {
+        System.Console.WriteLine(data.Text);
+        await Task.Yield();
+        CalendarEvent = data;
     }
 
     ///<summary>
@@ -292,6 +333,7 @@
         ModalSm = true;
 
         CalendarEvent = data;
+        await Task.Yield();
     }
 
     ///<summary>
@@ -304,6 +346,7 @@
         ModalSm = true;
 
         CalendarEvent = new();
+        await Task.Yield();
     }
 
     ///<summary>
@@ -311,6 +354,9 @@
     ///</summary>
     public async Task EditEvent(EventData data) 
     {
+        submitBtnState = LoadingState.Loading;
+        await Task.Delay(1000);
+        submitBtnState = LoadingState.Default;
         await eventRepository.EditEvent(data);
     }
 
@@ -319,6 +365,7 @@
     ///</summary>
     public async Task DeleteEvent(EventData data) 
     {
+        System.Console.WriteLine(data.Text);
         await eventRepository.DeleteEvent(data);
         Events = await eventRepository.LoadEvents();
     }
@@ -335,7 +382,5 @@
         await eventRepository.CreateEvent(CalendarEvent);
         Events = await eventRepository.LoadEvents();
         CalendarEvent = new();
-
-        System.Console.WriteLine(Events.Count);
     }
 }

@@ -56,7 +56,11 @@ namespace BlazorCalendar.Web.Data
         ///</summary>
        public async Task CreateEvent(EventData data) 
        {
-            data.Id = Events.Max(m => m.Id) + 1;
+            if(Events.Count != 0)
+                data.Id = Events.Max(m => m.Id) + 1;
+            else
+                data.Id = 1;
+            
             Events.Add(data);
             await Task.Yield();
        }
@@ -76,7 +80,7 @@ namespace BlazorCalendar.Web.Data
        public async Task EditEvent(EventData data) 
        {
           await Task.Yield();
-          int index = Events.IndexOf(data);
+          int index = Events.FindIndex(x => x.Id == data.Id);
           Events[index] = data;
        }
 

@@ -7,7 +7,7 @@ namespace  BlazorCalendar.Web.Data
 {
     ///<summary>
     ///  Интерфейс репозитория используется в DI
-    ///</summary
+    ///</summary>
     public interface IEventRepository
     {
         Task CreateEvent(EventData data);   
